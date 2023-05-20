@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Import build configuration
+source build.targets
+
 # File containing all patches
 patch_file=./patches.txt
 
@@ -21,10 +24,17 @@ declare -a patches
 # Artifacts associative array aka dictionary
 declare -A artifacts
 
-artifacts["revanced-cli.jar"]="revanced/revanced-cli revanced-cli .jar"
+
+if [ "$EXTENDED_SUPPORT" = "true" ]; then
+artifacts["revanced-cli.jar"]="inotia00/revanced-cli revanced-cli .jar"
+artifacts["revanced-integrations.jar"]="inotia00/revanced-integrations revanced-integrations .jar"
+artifacts["revanced-patches.jar"]="inotia00/revanced-patches revanced-patches .jar"
+else
 artifacts["revanced-integrations.apk"]="revanced/revanced-integrations revanced-integrations .apk"
-artifacts["vanced-microG.apk"]="inotia00/VancedMicroG microg .apk"
+artifacts["revanced-cli.jar"]="revanced/revanced-cli revanced-cli .jar"
 artifacts["revanced-patches.jar"]="revanced/revanced-patches revanced-patches .jar"
+fi
+artifacts["vanced-microG.apk"]="inotia00/VancedMicroG microg .apk"
 artifacts["apkeep"]="EFForg/apkeep apkeep-x86_64-unknown-linux-gnu"
 
 ## Functions
@@ -94,7 +104,7 @@ if [ -f "com.google.android.youtube.apk" ]; then
     java -jar revanced-cli.jar -m revanced-integrations.apk -b revanced-patches.jar --mount \
         -e microg-support ${patches[@]} \
         $EXPERIMENTAL \
-        -a com.google.android.youtube.apk -o build/revanced-youtube-root.apk
+        -a com.google.android.youtube.apk -o "build/revanced-youtube-$(cat versions.json | grep -oP '(?<="com.google.android.youtube.apk": ")[^"]*')-root.apk"
 else
     echo "Cannot find YouTube APK, skipping build"
 fi
@@ -109,7 +119,7 @@ if [ -f "com.google.android.youtube.apk" ]; then
     java -jar revanced-cli.jar -m revanced-integrations.apk -b revanced-patches.jar \
         ${patches[@]} \
         $EXPERIMENTAL \
-        -a com.google.android.youtube.apk -o build/revanced-youtube.apk
+        -a com.google.android.youtube.apk -o "build/revanced-youtube-$(cat versions.json | grep -oP '(?<="com.google.android.youtube.apk": ")[^"]*').apk"
 else
     echo "Cannot find YouTube APK, skipping build"
 fi
@@ -125,7 +135,7 @@ if [ -f "com.google.android.apps.youtube.music.apk" ]; then
     java -jar revanced-cli.jar -b revanced-patches.jar --mount \
         -e microg-support ${patches[@]} \
         $EXPERIMENTAL \
-        -a com.google.android.apps.youtube.music.apk -o build/revanced-music-root.apk
+        -a com.google.android.apps.youtube.music.apk -o "build/revanced-music-$(cat versions.json | grep -oP '(?<="com.google.android.apps.youtube.music.apk": ")[^"]*')-root.apk"
 else
     echo "Cannot find YouTube Music APK, skipping build"
 fi
@@ -141,7 +151,7 @@ if [ -f "com.google.android.apps.youtube.music.apk" ]; then
     java -jar revanced-cli.jar -b revanced-patches.jar \
         ${patches[@]} \
         $EXPERIMENTAL \
-        -a com.google.android.apps.youtube.music.apk -o build/revanced-music.apk
+        -a com.google.android.apps.youtube.music.apk -o "build/revanced-music-$(cat versions.json | grep -oP '(?<="com.google.android.apps.youtube.music.apk": ")[^"]*').apk"
 else
     echo "Cannot find YouTube Music APK, skipping build"
 fi
@@ -158,7 +168,7 @@ if [ -f "com.zhiliaoapp.musically.apk" ]; then
     java -Xmx8192m -jar revanced-cli.jar -m revanced-integrations.apk -b revanced-patches.jar \
         ${patches[@]} \
         $EXPERIMENTAL \
-        -a com.zhiliaoapp.musically.apk -o build/revanced-tiktok.apk
+        -a com.zhiliaoapp.musically.apk -o "build/revanced-tiktok-$(cat versions.json | grep -oP '(?<="com.zhiliaoapp.musically.apk": ")[^"]*').apk"
 else
     echo "Cannot find TikTok APK, skipping build"
 fi
@@ -174,13 +184,11 @@ if [ -f "tv.twitch.android.app.apk" ]; then
     java -jar revanced-cli.jar -m revanced-integrations.apk -b revanced-patches.jar \
         ${patches[@]} \
         $EXPERIMENTAL \
-        -a tv.twitch.android.app.apk -o build/revanced-twitch.apk
+        -a tv.twitch.android.app.apk -o "build/revanced-twitch-$(cat versions.json | grep -oP '(?<="tv.twitch.android.app.apk": ")[^"]*').apk"
 else
     echo "Cannot find Twitch APK, skipping build"
 fi
 }
-
-source build.targets
 
 if [ "$YOUTUBE_ROOT" = "true" ]; then
 	build_youtube_root
@@ -206,15 +214,15 @@ else
 	printf "\nSkipping YouTube Music ReVanced (nonroot)"
 fi
 
-if [ "$TIKTOK_NONROOT" = "true" ]; then
+if [ "$TIKTOK_NONROOT" = "true" ] && [ "$EXTENDED_SUPPORT" != "true" ]; then
 	build_tiktok_nonroot
 else
-	printf "\nSkipping TikTok (nonroot)"
+	printf "\nSkipping TikTok (nonroot) due to disabled config or ReVanced Extended support being enabled in build.targets"
 fi
 
-if [ "$TWITCH_NONROOT" = "true" ]; then
+if [ "$TWITCH_NONROOT" = "true" ] && [ "$EXTENDED_SUPPORT" != "true" ]; then
 	build_twitch_nonroot
 else
-	printf "\nSkipping Twitch (nonroot)"
+	printf "\nSkipping Twitch (nonroot) due to disabled config or ReVanced Extended support being enabled in build.targets"
 fi
 
