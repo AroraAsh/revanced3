@@ -62,7 +62,6 @@ populate_patches() {
 if [[ "$1" == "clean" ]]; then
     rm -f revanced-cli.jar revanced-integrations.apk revanced-patches.jar vanced-microG.apk
     rm -rf build/*
-    exit
 fi
 
 if [[ "$1" == "experimental" ]]; then
